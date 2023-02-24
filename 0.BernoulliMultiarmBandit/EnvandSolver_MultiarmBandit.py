@@ -166,7 +166,7 @@ def plot_results(solvers:list,solver_names:list):
   plt.legend()
   plt.show()
 
-#----------------------------------------------------------------随时间衰减的epsilon
+#--------------------------------------------------------------随时间衰减的epsilon
 class DecayingEpsilonGreedy(Solver):
   """
   epsilon随时间衰减的epsilon=greedy
@@ -190,7 +190,51 @@ class DecayingEpsilonGreedy(Solver):
     return k
 
 
+#-------------------------------------------------------------UpperConfidenceBound
+class UCB(Solver):
+  """
+  1.估计拉动每根拉杆的期望奖励上界，使得拉动每根拉杆的期望奖励只有一个较小的概率p超过这个上界 
+  2.选出期望上界最大的拉杆，从而选择最有可能获得最大期望奖励的拉杆
+  设定概率p->Hoeffding反推U(a)->a=argmax[Q+coef*U]
+  """
+  def __init__(self,bandit,coef,init_prob=1.0):
+    super().__init__(bandit)
+    self.total_count=0
+    self.estimates=np.array([init_prob]*self.bandit.K)
+    self.coef=coef
 
+  def run_one_step(self):
+    self.total_count += 1
+    U = self.coef*np.sqrt(np.log(self.total_count)/(2*(self.counts + 1))) # Hoeffding
+    ucb=self.estimates + U
+    
+    k=np.argmax(ucb)
+    r=self.bandit.step(k)
+    self.estimates[k] += 1./(self.counts[k]+1)*(r-self.estimates[k]) # update estimate
+
+    return k
+
+#-------------------------------------------------------------Thompson Sampling
+class ThompsonSampling(Solver):
+  """
+  进行一轮采样，直接选择样本中奖励最大的动作
+  """
+  def __init__(self,bandit):
+    super().__init__(bandit)
+    self._a=np.ones(self.bandit.K) # 每根拉杆奖励为1的次数
+    self._b=np.ones(self.bandit.K) # 每根拉杆奖励为0的次数
+
+  def run_one_step(self):
+    samples=np.random.beta(self._a,self._b) # 利用采样建立每个arm的beta分布来近似代表arm的奖励分布，然后从这些建立的beta分布中采样一次作为评估值,这个a,b是随着后面每次采样不断更新（增加）的
+    k = np.argmax(samples) # 采样奖励最大的拉杆
+    r=self.bandit.step(k)  # r = 0 or 1
+
+    self._a[k] += r
+    self._b[k] += 1-r
+
+    return k
+
+  
 
 
 

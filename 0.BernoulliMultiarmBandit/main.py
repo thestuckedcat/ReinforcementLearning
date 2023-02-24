@@ -4,7 +4,8 @@ from EnvandSolver_MultiarmBandit import BernoulliBandit
 from EnvandSolver_MultiarmBandit import EpsilonGreedy
 from EnvandSolver_MultiarmBandit import plot_results
 from EnvandSolver_MultiarmBandit import DecayingEpsilonGreedy
-
+from EnvandSolver_MultiarmBandit import UCB
+from EnvandSolver_MultiarmBandit import ThompsonSampling
 # ----------------------------------------------------------------Reference Example
 np.random.seed(1)  # make experiment reproducible
 # https://blog.csdn.net/weixin_45684362/article/details/126415226
@@ -38,9 +39,32 @@ plot_results(epsilon_greedy_solver_list,epsilon_greedy_solver_names)
 '''
 
 #----------------------------------------Decaying Epsilon
-
+'''
 np.random.seed(1)
 decaying_epsilon_greedy_solver=DecayingEpsilonGreedy(bandit_10_arm)
 decaying_epsilon_greedy_solver.run(5000)
 print('epsilon衰减的贪婪算法累积懊悔值为',decaying_epsilon_greedy_solver.regret)
 plot_results([decaying_epsilon_greedy_solver],['DecayingEpsilonGreedy'])
+'''
+
+#----------------------------------------UCB
+'''
+np.random.seed(1)
+coef=1 #不确定比重加权
+UCB_solver=UCB(bandit_10_arm,coef)
+UCB_solver.run(5000)
+print("UCB累计懊悔值为",UCB_solver.regret)
+plot_results([UCB_solver],['UCB'])
+'''
+
+#-----------------------------------------Thompson Sampling
+
+np.random.seed(1)
+Thompson_solver=ThompsonSampling(bandit_10_arm)
+Thompson_solver.run(5000)
+print("Thompson_sampling 的累计懊悔值为",Thompson_solver.regret)
+plot_results([Thompson_solver],['Thompson'])
+
+
+#------------------------------------------Conclusion
+print("epsilon 的 Total regret是随着时间线性增长的，其他三种是次线性增长的")
